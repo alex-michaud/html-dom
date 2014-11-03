@@ -1,7 +1,7 @@
 <?php
 /*******************************************************************************
-Version: 0.6
-Date : 2013-09-08
+Version: 0.6.2
+Date : 2014-11-03
 Website: http://www.ecliptik.net/html-dom.html
 Website doc: http://www.ecliptik.net/html-dom.html
 Author: alex michaud <alex.michaud@gmail.com>
@@ -130,9 +130,9 @@ class Html_dom
 	{
 		$aElements = array();
 		
-		$dom_xpath = new html_dom_xpath($this->dom);
+		$dom_xpath = new Html_dom_xpath($this->dom);
 		
-		$xpathSelector = html_dom::cssSelectorToXPath($selector);
+		$xpathSelector = Html_dom::cssSelectorToXPath($selector);
 		$aElements = $dom_xpath->select($xpathSelector);
 		
 		if($index<0) 
@@ -145,7 +145,7 @@ class Html_dom
 	}
 }
 
-class html_dom_xpath
+class Html_dom_xpath
 {
 	private $xpath;
 	
@@ -179,9 +179,9 @@ class html_dom_xpath
 		if($nodeList !== false)
 		{
 			foreach($nodeList as $node)
-				$a[] = new html_dom_node($node, $this->dom);
+				$a[] = new Html_dom_node($node, $this->dom);
 			
-			return new html_dom_node_collection($a);
+			return new Html_dom_node_collection($a);
 		}
 		else
 		{
@@ -196,7 +196,7 @@ class html_dom_xpath
 	
 }
 
-class html_dom_node
+class Html_dom_node
 {
 	private $node;
 	private $dom;
@@ -296,9 +296,11 @@ class html_dom_node
 		$list = $newdoc->getElementsByTagName('script');
 		foreach ($list as $script) {
 		    if ($script->childNodes->length && $script->firstChild->nodeType == 4) {
-		        $cdata = $script->removeChild($script->firstChild);
-		        $text = $newdoc->createTextNode($cdata->nodeValue);
-		        $script->appendChild($text);
+				$textnode = $script->ownerDocument->createTextNode("\n//");
+		        $cdata = $script->ownerDocument->createCDATASection("\n" . $script->firstChild->nodeValue . "\n//");
+				$script->removeChild($script->firstChild);
+		        $script->appendChild($textnode);
+		        $script->appendChild($cdata);
 		    }
 		}
 
@@ -458,7 +460,7 @@ class html_dom_node
 	{
 		$previousSibling = $this->_move_prev_element($this->node);
 		if(!is_null($previousSibling))
-			return new html_dom_node($previousSibling, $this->dom);
+			return new Html_dom_node($previousSibling, $this->dom);
 		else
 			return NULL;
 	}
@@ -471,7 +473,7 @@ class html_dom_node
 	{
 		$nextSibling = $this->_move_next_element($this->node);
 		if(!is_null($nextSibling))
-			return new html_dom_node($nextSibling, $this->dom);
+			return new Html_dom_node($nextSibling, $this->dom);
 		else
 			return NULL;
 	}
@@ -510,7 +512,7 @@ class html_dom_node
 			foreach($this->node->childNodes as $node)
 			{
 				if($node->nodeType == 1)
-					$a[] = new html_dom_node($node, $this->dom);
+					$a[] = new Html_dom_node($node, $this->dom);
 			}
 		}
 		return $a;
@@ -528,7 +530,7 @@ class html_dom_node
 			foreach($this->node->parentNode->childNodes as $node)
 			{
 				if($node->nodeType == 1 && !$this->node->isSameNode($node))
-					$a[] = new html_dom_node($node, $this->dom);
+					$a[] = new Html_dom_node($node, $this->dom);
 			}
 		}
 		
@@ -541,7 +543,7 @@ class html_dom_node
 	 */
 	public function parent()
 	{
-		$parentNode = new html_dom_node($this->node->parentNode, $this->dom);
+		$parentNode = new Html_dom_node($this->node->parentNode, $this->dom);
 		return $parentNode;
 	}
 	
@@ -555,9 +557,9 @@ class html_dom_node
 	{
 		$aElements = array();
 		
-		$dom_xpath = new html_dom_xpath($this->dom);
+		$dom_xpath = new Html_dom_xpath($this->dom);
 		
-		$xpathSelector = html_dom::cssSelectorToXPath($selector);
+		$xpathSelector = Html_dom::cssSelectorToXPath($selector);
 		$aElements = $dom_xpath->select($xpathSelector, $this->node);
 		
 		if($index<0) 
@@ -599,28 +601,62 @@ class html_dom_node
 	}
 }
 
-class html_dom_node_collection extends ArrayObject 
+class Html_dom_node_collection extends ArrayObject 
 {
-
-	public function __get($method_name) 
+	private $iterator = array();
+	
+	public function __construct($arrDomNode)
+	{
+		parent::__construct($arrDomNode);
+		$this->iterator = $this->getIterator();
+	}
+	
+	public function __call($name, $arguments = null)
+	{
+		$value = (!is_null($arguments) && isset($arguments[0]))?$arguments[0]:null;
+		
+		switch($name)
+		{
+			case 'seek' :
+			case 'rewind' :
+			case 'next' :
+				$this->iterator->$name();
+				return $this->iterator;
+				break;
+			case 'current' :
+				return $this->iterator->current();
+				break;
+			case 'valid' :
+				return $this->iterator->valid();
+				break;
+			default :
+				while($this->iterator->valid())
+				{
+					$this->iterator->current()->$name($value);
+			    	$this->iterator->next();
+				}
+		}
+	}
+	
+	public function __get($name) 
 	{
 		$out = array();
-		$iterator = $this->getIterator();
-		while($iterator->valid())
+		// $iterator = $this->getIterator();
+		while($this->iterator->valid())
 		{
-			$out[] = $iterator->current()->$method_name;
-		    $iterator->next();
+			$out[] = $this->iterator->current()->$name;
+		    $this->iterator->next();
 		}
 		return $out;
     }
 	
-	public function __set($method_name, $value) 
+	public function __set($name, $value) 
 	{
-		$iterator = $this->getIterator();
-		while($iterator->valid())
+		// $iterator = $this->getIterator();
+		while($this->iterator->valid())
 		{
-			$iterator->current()->$method_name = $value;
-	    	$iterator->next();
+			$this->iterator->current()->$name = $value;
+	    	$this->iterator->next();
 		}
     }
 }
