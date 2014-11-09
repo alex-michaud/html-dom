@@ -76,19 +76,31 @@ $html_dom->find('ul li', 0)->hasClass('menu_item'); // find the first "<li>" ele
 echo $html_dom->save();
 ```
 
-### API ###
+## API ##
 
-#### Class Html_dom ####
+### Class Html_dom ###
 
 ##### Methods #####
 
-```_loadHTML(string $str)_```
-```_loadHTMLFile(string $file_path)_```
-```_save([string $file_path])_```
-```_find(string $selector[, int $index])_```
+```ruby
+loadHTML(string $str)
+```
 
-#### Class Html_dom_node ####
+```
+loadHTMLFile(string $file_path)
+```
+
+```
+save([string $file_path])
+```
+
+```
+find(string $selector[, int $index])
+```
 
 
-#### Class Html_dom_node_collection ####
+### Class Html_dom_node ###
+
+
+### Class Html_dom_node_collection ###
 
