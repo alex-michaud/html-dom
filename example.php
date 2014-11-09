@@ -7,6 +7,7 @@ include_once 'Html_dom.php';
 $html_dom = file_get_html('example.html');
 
 // $html_dom->find('.menu_item')->addClass('class_test');
+// $html_dom->find('.menu_item')->class = 'class_test';
 // 
 // echo $html_dom->find('nav', 0)->outertext;exit;
 
@@ -26,6 +27,7 @@ $html_dom = file_get_html('example.html');
 <p>Content of the first child in the list of items : <?php echo $html_dom->find('#content ol', 0)->first_child()->innertext; ?></p>
 <p>Content of the third child in the list of items : <?php echo $html_dom->find('#content ol li')->offsetGet(2)->innertext; ?></p>
 <p>Value of first menu item href attribute : <?php echo $html_dom->find('nav a', 0)->href; ?></p>
+<p>Add an attribute to a list of node : <?php $html_dom->find('.menu_item')->addClass('class_test'); ?></p>
 <hr />
 <h3>Content of nav</h3>
 <div><?php echo $html_dom->find('nav', 0)->innertext?></div>
