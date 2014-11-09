@@ -514,7 +514,7 @@ class Html_dom_node
 					$a[] = new Html_dom_node($node, $this->dom);
 			}
 		}
-		return $a;
+		return new Html_dom_node_collection($a);
 	}
 	
 	/**
@@ -533,7 +533,7 @@ class Html_dom_node
 			}
 		}
 		
-		return $a;
+		return new Html_dom_node_collection($a);
 	}
 	
 	/**

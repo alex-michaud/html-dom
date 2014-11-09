@@ -86,21 +86,136 @@ echo $html_dom->save();
 loadHTML(string $str)
 ```
 
-```
+```ruby
 loadHTMLFile(string $file_path)
 ```
 
-```
+```ruby
 save([string $file_path])
 ```
 
-```
+```ruby
 find(string $selector[, int $index])
 ```
 
 
 ### Class Html_dom_node ###
 
+##### Methods #####
+
+```ruby
+getTag()
+```
+
+```ruby
+getInnerText()
+```
+
+```ruby
+getOuterText()
+```
+
+```ruby
+getAttr(string $attributeName)
+```
+
+if your manipulating a **Html_dom_node** object, you can also use the following shortcut methods
+```ruby
+->innertext // shortcut for ->getInnerText()
+->outertext // shortcut for ->getOuterText()
+->tag // shortcut for ->getTag()
+->class // shortcut for ->getAttr('class')
+->href // shortcut for ->getAttr('href')
+->id // shortcut for ->getAttr('id')
+->title // shortcut for ->getAttr('title')
+->my_custom_attribute // shortcut for ->getAttr('my_custom_attribute')
+...
+```
+
+```ruby
+setInnerText(string $value)
+```
+
+```ruby
+setOuterText(string $value)
+```
+
+```ruby
+addClass(string $value)
+```
+
+```ruby
+removeClass(string $value)
+```
+
+```ruby
+hasClass(string $value)
+```
+
+```ruby
+setAttr(string $attributeName, string $value)
+```
+
+```ruby
+removeAttr(string $attributeName)
+```
+
+if your manipulating a **Html_dom_node** object, you can also use the following shortcut methods
+```ruby
+->innertext = $value // shortcut for ->setInnerText($value)
+->outertext = $value // shortcut for ->setOuterText($value)
+->class = $value // shortcut for ->setAttr('class', $value)
+->href = $value // shortcut for ->setAttr('href', $value)
+->id = $value // shortcut for ->setAttr('id', $value)
+->title = $value // shortcut for ->setAttr('title', $value)
+->my_custom_attribute = $value // shortcut for ->setAttr('my_custom_attribute', $value)
+```
+
+```ruby
+first_child()
+```
+
+```ruby
+last_child()
+```
+
+```ruby
+previous_sibling()
+```
+
+```ruby
+next_sibling()
+```
+
+```ruby
+children()
+```
+
+```ruby
+siblings()
+```
+
+```ruby
+parent()
+```
+
+```ruby
+find(string $selector[, int $index])
+```
+
+```ruby
+remove()
+```
+
+```ruby
+remove_childs()
+```
+
 
 ### Class Html_dom_node_collection ###
 
+##### Methods #####
+
+```ruby
+
+```
