@@ -191,7 +191,6 @@ class Html_dom_xpath
 				throw new Exception("xpath selector is not valid : {$q} | Is related:{$isRelated}", 1);
 			
 		}
-		// return $a;
 	}
 	
 }

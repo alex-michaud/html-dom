@@ -26,5 +26,13 @@ $html_dom = file_get_html('example.html');
 <p>Content of the first child in the list of items : <?php echo $html_dom->find('#content ol', 0)->first_child()->innertext; ?></p>
 <p>Content of the third child in the list of items : <?php echo $html_dom->find('#content ol li')->offsetGet(2)->innertext; ?></p>
 <p>Value of first menu item href attribute : <?php echo $html_dom->find('nav a', 0)->href; ?></p>
-
-
+<hr />
+<h3>Content of nav</h3>
+<div><?php echo $html_dom->find('nav', 0)->innertext?></div>
+<h3>Same nav but we add 1 item</h3>
+<div>
+<?php
+$html_dom->find('nav ul', 0)->innertext .= '<li class="menu_item"><a href="#/new-item">New item</a></li>';
+echo $html_dom->find('nav', 0)->innertext;
+?>
+</div>
