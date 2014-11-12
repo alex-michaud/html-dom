@@ -11,6 +11,9 @@ $html_dom = file_get_html('example.html');
 // 
 // echo $html_dom->find('nav', 0)->outertext;exit;
 
+// $html_dom->find('#content ol li')->addClass('strange_class');
+// echo $html_dom->save(); exit;
+
 // $arrItems = $html_dom->find('#content ol li');
 // $arrItems->rewind();
 // var_dump($arrItems->current());

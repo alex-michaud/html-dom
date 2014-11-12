@@ -514,6 +514,7 @@ class Html_dom_node
 					$a[] = new Html_dom_node($node, $this->dom);
 			}
 		}
+		
 		return new Html_dom_node_collection($a);
 	}
 	
@@ -634,6 +635,7 @@ class Html_dom_node_collection extends ArrayObject
 					$this->iterator->current()->$name($value);
 			    	$this->iterator->next();
 				}
+				break;
 		}
 	}
 	

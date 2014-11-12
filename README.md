@@ -214,8 +214,64 @@ remove_childs()
 
 ### Class Html_dom_node_collection ###
 
+This Class extends ArrayObject, so all the methods available with ArrayObject can be used here.
+[PHP ArrayObject](http://us3.php.net/manual/en/class.arrayobject.php)
+
+Here is a list of the most common methods you might need.
+
 ##### Methods #####
 
 ```ruby
-
+count()
 ```
+
+```ruby
+offsetExists(mixed $index)
+```
+
+```ruby
+offsetGet(mixed $index)
+```
+
+```ruby
+offsetSet(mixed $index, mixed $value)
+```
+
+```ruby
+offsetUnset(mixed $index)
+```
+
+**You can also iterate in the array using the following methods**
+
+```ruby
+seek()
+```
+
+```ruby
+rewind()
+```
+
+```ruby
+next()
+```
+
+```ruby
+current() // return the current Html_node
+```
+
+```ruby
+valid() // return a boolean
+```
+
+**You can also apply one the the Html_node to all the items in the collections**
+
+_the examples below assume the we have loaded a document into $html_dom_
+
+```ruby
+$html_dom->find('ul li')->addClass('li_class'); // Will add the class "li_class" to all the "<li>" items
+```
+
+```ruby
+$html_dom->find('ul li')->removeClass('li_class'); // Will remove the class "li_class" to all the "<li>" items
+```
+
