@@ -1,7 +1,7 @@
 <?php
 /*******************************************************************************
-Version: 0.6.2
-Date : 2014-11-03
+Version: 0.6.3
+Date : 2014-12-11
 Website: http://www.ecliptik.net/html-dom.html
 Website doc: http://www.ecliptik.net/html-dom.html
 Author: alex michaud <alex.michaud@gmail.com>
@@ -56,22 +56,26 @@ class Html_dom
 		$patterns[0] = '/^([a-z\-:_\.]+)/';
 		$patterns[1] = '/^#/';
 		$patterns[2] = '/^\./';
-		$patterns[3] = '/\s+\>\s+/';
-		$patterns[4] = '/\s+/';
-		$patterns[5] = '/(#)([\w\-:_\.]+)/';
-		$patterns[6] = '/(\.)([\w\-:_\.]+)/';
-		// $patterns[6] = '/^([a-z]+)\s+([a-z+)/';
+		$patterns[3] = '/^\[/';
+		$patterns[4] = '/\s+\>\s+/';
+		$patterns[5] = '/\s+/';
+		$patterns[6] = '/(#)([\w\-:_\.]+)/';
+		$patterns[7] = '/(\.)([\w\-:_\.]+)/';
+		$patterns[8] = '/\[(\w+)\=([\w\"\-:_\.]+)\]/';
+		// $patterns[8] = '/^([a-z]+)\s+([a-z+)/';
 		$replacements = array();
 		$replacements[0] = '\1';
 		$replacements[1] = '*#';
 		$replacements[2] = '*.';
-		$replacements[3] = '/';
-		$replacements[4] = '//';
-		$replacements[5] = '[@id="\2"]';
-		$replacements[6] = '[contains(@class,"\2")]';
-		// $replacements[6] = '\1\/\/\2';
+		$replacements[3] = '*[';
+		$replacements[4] = '/';
+		$replacements[5] = '//';
+		$replacements[6] = '[@id="\2"]';
+		$replacements[7] = '[contains(@class,"\2")]';
+		$replacements[8] = '[contains(@\1,\2)]';
+		// $replacements[8] = '\1\/\/\2';
 		$a = preg_replace($patterns, $replacements, $q);
-		// echo $a."<br />\n";
+		// echo $a." | <br />\n";
 		return $a;
 	}
 	

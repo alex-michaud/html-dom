@@ -46,27 +46,28 @@ $html_dom->save('/path/to/file.html');
 
 ```php
 <?php
-$arrDomElements = $html_dom->find("p"); // array of all the "<p>" elements
-$domElement = $html_dom->find("p", 0); // first "<p>" element
-$domElement = $html_dom->find("p", 1); // second "<p>" element
-$arrDomElements = $html_dom->find("div.promo"); // array of DOM element "<div>" with attribute class="promo"
-$domElement = $html_dom->find("#login", 0); // DOM element with attribute id="login"
-$domElement = $html_dom->find("ul", 0)->first_child(); // first child element under "<ul>" (sould be the first "<li>" element)
-$li_content = $html_dom->find("ul", 0)->first_child()->innertext; // content of first "<li>" element
-$domElement = $html_dom->find("ul", 0)->last_child(); // last child element under "<ul>" (sould be the last "<li>" element)
-$li_content = $html_dom->find("ul li", 1)->innertext; // content of second "<li>" element
-$arrDomElements = $html_dom->find("ul li"); // array of dom elements
-$domElement = $html_dom->find("ul li")->offsetGet(2); // third element in the array
-$attrValue = $html_dom->find("a", 0)->href; // value of "href" attribute
-$attrValue = $html_dom->find("a", 0)->my_custom_attribute; // value of "my_custom_attribute" attribute (-> will work for any attribute)
+$arrDomElements = $html_dom->find('p'); // array of all the "<p>" elements
+$domElement = $html_dom->find('p', 0); // first "<p>" element
+$domElement = $html_dom->find('p', 1); // second "<p>" element
+$arrDomElements = $html_dom->find('div.promo'); // array of DOM element "<div>" with attribute class="promo"
+$domElement = $html_dom->find('#login', 0); // DOM element with attribute id="login"
+$domElement = $html_dom->find('meta[name="description"]', 0); // DOM meta element with attribute name="description"
+$domElement = $html_dom->find('ul', 0)->first_child(); // first child element under "<ul>" (sould be the first "<li>" element)
+$li_content = $html_dom->find('ul', 0)->first_child()->innertext; // content of first "<li>" element
+$domElement = $html_dom->find('ul', 0)->last_child(); // last child element under "<ul>" (sould be the last "<li>" element)
+$li_content = $html_dom->find('ul li', 1)->innertext; // content of second "<li>" element
+$arrDomElements = $html_dom->find('ul li'); // array of dom elements
+$domElement = $html_dom->find('ul li')->offsetGet(2); // third element in the array
+$attrValue = $html_dom->find('a', 0)->href; // value of "href" attribute
+$attrValue = $html_dom->find('a', 0)->my_custom_attribute; // value of "my_custom_attribute" attribute (-> will work for any attribute)
 ```
 
 ### Modify document ###
 
 ```php
 <?php
-$html_dom->find("h1", 0)->innertext = 'New H1 title'; // replace H1 title
-$html_dom->find("h1", 0)->innertext .= '!!!'; // add exclamations mark to H1 title
+$html_dom->find('h1', 0)->innertext = 'New H1 title'; // replace H1 title
+$html_dom->find('h1', 0)->innertext .= '!!!'; // add exclamations mark to H1 title
 $html_dom->find('.menu_item')->addClass('class_test'); // find all the elements with class "menu_item" and add the class "class_test"
 $html_dom->find('.menu_item')->class = 'class_test'; // find all the elements with class "menu_item" and replace the class by "class_test"
 $html_dom->find('ul li')->removeClass('menu_item'); // find all the "<li>" elements under "<ul>" and remove the class "menu_item"
@@ -82,19 +83,23 @@ echo $html_dom->save();
 
 ##### Methods #####
 
-```ruby
+```php
+<?php
 loadHTML(string $str)
 ```
 
-```ruby
+```php
+<?php
 loadHTMLFile(string $file_path)
 ```
 
-```ruby
+```php
+<?php
 save([string $file_path])
 ```
 
-```ruby
+```php
+<?php
 find(string $selector[, int $index])
 ```
 
@@ -103,24 +108,29 @@ find(string $selector[, int $index])
 
 ##### Methods #####
 
-```ruby
+```php
+<?php
 getTag()
 ```
 
-```ruby
+```php
+<?php
 getInnerText()
 ```
 
-```ruby
+```php
+<?php
 getOuterText()
 ```
 
-```ruby
+```php
+<?php
 getAttr(string $attributeName)
 ```
 
-if your manipulating a **Html_dom_node** object, you can also use the following shortcut methods
-```ruby
+if you are manipulating a **Html_dom_node** object, you can also use the following shortcut methods
+```php
+<?php
 ->innertext // shortcut for ->getInnerText()
 ->outertext // shortcut for ->getOuterText()
 ->tag // shortcut for ->getTag()
@@ -132,36 +142,44 @@ if your manipulating a **Html_dom_node** object, you can also use the following 
 ...
 ```
 
-```ruby
+```php
+<?php
 setInnerText(string $value)
 ```
 
-```ruby
+```php
+<?php
 setOuterText(string $value)
 ```
 
-```ruby
+```php
+<?php
 addClass(string $value)
 ```
 
-```ruby
+```php
+<?php
 removeClass(string $value)
 ```
 
-```ruby
+```php
+<?php
 hasClass(string $value)
 ```
 
-```ruby
+```php
+<?php
 setAttr(string $attributeName, string $value)
 ```
 
-```ruby
+```php
+<?php
 removeAttr(string $attributeName)
 ```
 
 if your manipulating a **Html_dom_node** object, you can also use the following shortcut methods
-```ruby
+```php
+<?php
 ->innertext = $value // shortcut for ->setInnerText($value)
 ->outertext = $value // shortcut for ->setOuterText($value)
 ->class = $value // shortcut for ->setAttr('class', $value)
@@ -171,43 +189,53 @@ if your manipulating a **Html_dom_node** object, you can also use the following 
 ->my_custom_attribute = $value // shortcut for ->setAttr('my_custom_attribute', $value)
 ```
 
-```ruby
+```php
+<?php
 first_child()
 ```
 
-```ruby
+```php
+<?php
 last_child()
 ```
 
-```ruby
+```php
+<?php
 previous_sibling()
 ```
 
-```ruby
+```php
+<?php
 next_sibling()
 ```
 
-```ruby
+```php
+<?php
 children()
 ```
 
-```ruby
+```php
+<?php
 siblings()
 ```
 
-```ruby
+```php
+<?php
 parent()
 ```
 
-```ruby
+```php
+<?php
 find(string $selector[, int $index])
 ```
 
-```ruby
+```php
+<?php
 remove()
 ```
 
-```ruby
+```php
+<?php
 remove_childs()
 ```
 
@@ -221,45 +249,55 @@ Here is a list of the most common methods you might need.
 
 ##### Methods #####
 
-```ruby
+```php
+<?php
 count()
 ```
 
-```ruby
+```php
+<?php
 offsetExists(mixed $index)
 ```
 
-```ruby
+```php
+<?php
 offsetGet(mixed $index)
 ```
 
-```ruby
+```php
+<?php
 offsetSet(mixed $index, mixed $value)
 ```
 
-```ruby
+```php
+<?php
 offsetUnset(mixed $index)
 ```
 
 **You can also iterate in the array using the following methods**
 
-```ruby
+```php
+<?php
 seek()
 ```
 
-```ruby
+```php
+<?php
 rewind()
 ```
 
-```ruby
+```php
+<?php
 next()
 ```
 
-```ruby
+```php
+<?php
 current() // return the current Html_node
 ```
 
-```ruby
+```php
+<?php
 valid() // return a boolean
 ```
 
@@ -267,11 +305,13 @@ valid() // return a boolean
 
 _the examples below assume the we have loaded a document into $html_dom_
 
-```ruby
+```php
+<?php
 $html_dom->find('ul li')->addClass('li_class'); // Will add the class "li_class" to all the "<li>" items
 ```
 
-```ruby
+```php
+<?php
 $html_dom->find('ul li')->removeClass('li_class'); // Will remove the class "li_class" to all the "<li>" items
 ```
 
