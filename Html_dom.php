@@ -1,7 +1,7 @@
 <?php
 /*******************************************************************************
-Version: 0.6.3
-Date : 2014-12-11
+Version: 0.6.4
+Date : 2014-12-26
 Website: http://www.ecliptik.net/html-dom.html
 Website doc: http://www.ecliptik.net/html-dom.html
 Author: alex michaud <alex.michaud@gmail.com>
@@ -53,15 +53,15 @@ class Html_dom
 	public static function cssSelectorToXPath($q)
 	{
 		$patterns = array();
-		$patterns[0] = '/^([a-z\-:_\.]+)/';
-		$patterns[1] = '/^#/';
-		$patterns[2] = '/^\./';
-		$patterns[3] = '/^\[/';
-		$patterns[4] = '/\s+\>\s+/';
-		$patterns[5] = '/\s+/';
-		$patterns[6] = '/(#)([\w\-:_\.]+)/';
-		$patterns[7] = '/(\.)([\w\-:_\.]+)/';
-		$patterns[8] = '/\[(\w+)\=([\w\"\-:_\.]+)\]/';
+		$patterns[0] = '/^([a-z\-:_\.]+)/i';
+		$patterns[1] = '/^#/i';
+		$patterns[2] = '/^\./i';
+		$patterns[3] = '/^\[/i';
+		$patterns[4] = '/\s+\>\s+/i';
+		$patterns[5] = '/\s+/i';
+		$patterns[6] = '/(#)([\w\-:_\.]+)/i';
+		$patterns[7] = '/(\.)([\w\-:_\.]+)/i';
+		$patterns[8] = '/\[([\w\-]+)\=([\w\"\-:_\.]+)\]/i';
 		// $patterns[8] = '/^([a-z]+)\s+([a-z+)/';
 		$replacements = array();
 		$replacements[0] = '\1';

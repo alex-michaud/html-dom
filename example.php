@@ -8,7 +8,7 @@ $html_dom = file_get_html('example.html');
 
 // echo $html_dom->find('meta',2)->content;
 // echo $html_dom->find('li.menu_item', 0)->innertext;
-// echo $html_dom->find('meta[name="author"]',0)->content;
+// echo $html_dom->find('meta[http-equiv="Content-Language"]',0)->content;
 // exit;
 
 // $html_dom->find('.menu_item')->addClass('class_test');
