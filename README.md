@@ -8,22 +8,18 @@ Require PHP 5.3+
 ## Usage ##
 
 Simply include the class in this classic way : 
-```php
-<?php
+``` php
 require_once('Html_dom.php');
 ```
 
-
 Then load a dom document like this : 
-```php
-<?php
-$html_dom = file_get_html('example.html');
+``` php
+$html_dom = file_get_html('index.html');
 ```
 
 You can also load a html string directly :
-```php
-<?php
-$html_dom = str_get_html('<ul><li>item 1</li><li>item 3</li><li>item 3</li></ul>');
+``` php
+$html_dom = str_get_html('<ul><li>item 1</li><li>item 2</li><li>item 3</li></ul>');
 ```
 
 Once you have the document loaded you can parse it, modify it and output the modified version. 
@@ -31,41 +27,68 @@ Once you have the document loaded you can parse it, modify it and output the mod
 ### Output ###
 
 You can output the document using the **save()** method : 
-```php
-<?php
+``` php
 echo $html_dom->save();
 ```
 
 You can also save the output in a file directly if you specify the file path :
-```php
-<?php
+``` php
 $html_dom->save('/path/to/file.html');
 ```
 
-### Parse and retrieve data ###
+### Parse document ###
 
-```php
-<?php
-$arrDomElements = $html_dom->find('p'); // array of all the "<p>" elements
-$domElement = $html_dom->find('p', 0); // first "<p>" element
-$domElement = $html_dom->find('p', 1); // second "<p>" element
-$arrDomElements = $html_dom->find('div.promo'); // array of DOM element "<div>" with attribute class="promo"
-$domElement = $html_dom->find('#login', 0); // DOM element with attribute id="login"
-$domElement = $html_dom->find('meta[name="description"]', 0); // DOM meta element with attribute name="description"
-$domElement = $html_dom->find('ul', 0)->first_child(); // first child element under "<ul>" (sould be the first "<li>" element)
-$li_content = $html_dom->find('ul', 0)->first_child()->innertext; // content of first "<li>" element
-$domElement = $html_dom->find('ul', 0)->last_child(); // last child element under "<ul>" (sould be the last "<li>" element)
-$li_content = $html_dom->find('ul li', 1)->innertext; // content of second "<li>" element
-$arrDomElements = $html_dom->find('ul li'); // array of dom elements
-$domElement = $html_dom->find('ul li')->offsetGet(2); // third element in the array
-$attrValue = $html_dom->find('a', 0)->href; // value of "href" attribute
-$attrValue = $html_dom->find('a', 0)->my_custom_attribute; // value of "my_custom_attribute" attribute (-> will work for any attribute)
+Parsing a document can be done with diffrent methods. The fastest one, if you have the element id, is _getElementById()_.
+The second fastest one is probably _getElementsByTagName()_.
+Finally, the general one where you can pass all kinds of selector is _find()_. 
+
+#### _Html_dom_node_ getElementById(string $elementId)
+
+``` php
+$contentElement = $html_dom->getElementById('content');
 ```
+
+#### _Html_dom_node_collection_ getElementsByTagName(string $tagName)
+#### _Html_dom_node_ getElementsByTagName(string $tagName, int $index)
+
+``` php
+$liElementCollection = $html_dom->getElementsByTagName('li');
+$secondLiElement = $html_dom->getElementsByTagName('li', 1);
+```
+
+#### _Html_dom_node_collection_ find(string $cssSelector)
+#### _Html_dom_node_ find(string $cssSelector, int $index)
+
+``` php
+$pElementCollection = $html_dom->find('p'); // array of all the "<p>" elements
+$pElement = $html_dom->find('p', 0); // first "<p>" element
+$pElement = $html_dom->find('p', 1); // second "<p>" element
+$elementCollection = $html_dom->find('div.promo'); // array of DOM element "<div>" with attribute class="promo"
+$element = $html_dom->find('#login', 0); // DOM element with attribute id="login"
+$element = $html_dom->find('meta[name="description"]', 0); // DOM meta element with attribute name="description"
+$element = $html_dom->find('ul', 0)->first_child(); // first child element under "<ul>" (sould be the first "<li>" element)
+$element = $html_dom->find('ul', 0)->last_child(); // last child element under "<ul>" (sould be the last "<li>" element)
+$liElementCollection = $html_dom->find('ul li'); // array of dom elements
+$element = $html_dom->find('ul li')->offsetGet(2); // third element in the array
+```
+
+### Retrieve data ###
+
+Once we have a **_Html_dom_node_** or a **_Html_dom_node_collection_**, we can retrieve some data.
+
+``` php
+$ul_content = $html_dom->find('ul', 0)->innertext; // content of first "<ul>" element
+$li_content = $html_dom->find('ul li', 1)->innertext; // content of second "<li>" element
+$attrValue = $html_dom->find('a', 0)->href; // value of "href" attribute
+$attrValue = $html_dom->find('a', 0)->my_custom_attribute; // value of "my_custom_attribute" attribute (will work for any attribute)
+```
+
 
 ### Modify document ###
 
-```php
-<?php
+You can modify the content of a Html_node or modify its attributes.
+
+``` php
 $html_dom->find('h1', 0)->innertext = 'New H1 title'; // replace H1 title
 $html_dom->find('h1', 0)->innertext .= '!!!'; // add exclamations mark to H1 title
 $html_dom->find('.menu_item')->addClass('class_test'); // find all the elements with class "menu_item" and add the class "class_test"
@@ -83,160 +106,191 @@ echo $html_dom->save();
 
 ##### Methods #####
 
-```php
-<?php
+``` php
 loadHTML(string $str)
 ```
 
-```php
-<?php
+``` php
 loadHTMLFile(string $file_path)
 ```
 
-```php
-<?php
-save([string $file_path])
+``` php
+setBasicAuth(string $username, string $password)
+
+Example : 
+$html_dom = new Html_dom();
+$html_dom->setBasicAuth('username', 'secret_password');
+$html_dom->loadHTMLFile('/path/to/file.html')
 ```
 
-```php
-<?php
+``` php
+getElementById(string $elementId)
+```
+
+``` php
+getElementsByTagName(string $tagName[, int $index])
+```
+
+``` php
+save(string $file_path)
+```
+
+``` php
 find(string $selector[, int $index])
 ```
 
 
 ### Class Html_dom_node ###
 
-##### Methods #####
-
-```php
-<?php
-getTag()
+**Let's assume that we have a code that start with this**
+``` php
+$html_dom = file_get_html('index.html');
+$html_dom_node = $html_dom->getElementById('content');
 ```
 
-```php
-<?php
-getInnerText()
+#### _string_ getTag()
+``` php
+$html_dom_node->getTag();
+OR
+$html_dom_node->tag;
 ```
 
-```php
-<?php
-getOuterText()
+#### _string_ getInnerText()
+``` php
+$html_dom_node->getInnerText();
+OR
+$html_dom_node->innertext;
 ```
 
-```php
-<?php
-getAttr(string $attributeName)
+#### _string_ getOuterText()
+``` php
+$html_dom_node->getOuterText();
+OR
+$html_dom_node->outertext;
 ```
 
-if you are manipulating a **Html_dom_node** object, you can also use the following shortcut methods
-```php
-<?php
-->innertext // shortcut for ->getInnerText()
-->outertext // shortcut for ->getOuterText()
-->tag // shortcut for ->getTag()
-->class // shortcut for ->getAttr('class')
-->href // shortcut for ->getAttr('href')
-->id // shortcut for ->getAttr('id')
-->title // shortcut for ->getAttr('title')
-->my_custom_attribute // shortcut for ->getAttr('my_custom_attribute')
-...
+#### _string_ getAttr(string $attributeName)
+``` php
+$html_dom_node->getAttr(string $attributeName)
+OR
+$html_dom_node->attribute_name;
+
+Examples : 
+$html_dom_node->class;
+$html_dom_node->id;
+$html_dom_node->href;
+$html_dom_node->title;
+$html_dom_node->my_custom_attribute;
 ```
 
-```php
-<?php
-setInnerText(string $value)
+#### _void_ setInnerText(string $value)
+``` php
+$html_dom_node->setInnerText($value);
+OR
+$html_dom_node->innertext = $value;
 ```
 
-```php
-<?php
-setOuterText(string $value)
+#### _void_ setOuterText(string $value)
+``` php
+$html_dom_node->setOuterText($value);
+OR
+$html_dom_node->outertext = $value;
 ```
 
-```php
-<?php
-addClass(string $value)
+#### _void_ addClass(string $class_name)
+``` php
+$html_dom_node->addClass($class_name);
 ```
 
-```php
-<?php
-removeClass(string $value)
+#### _void_ removeClass(string $class_name)
+``` php
+$html_dom_node->removeClass($class_name);
 ```
 
-```php
-<?php
-hasClass(string $value)
+#### _bool_ hasClass(string $class_name)
+``` php
+$html_dom_node->hasClass($class_name);
 ```
 
-```php
-<?php
-setAttr(string $attributeName, string $value)
+#### _void_ setAttr(string $attributeName, string $value)
+``` php
+$html_dom_node->setAttr($attributeName, $value);
+OR
+$html_dom_node->attribute_name = $value;
+
+Examples : 
+$html_dom_node->class = 'my_class';
+$html_dom_node->id = 'element_id';
+$html_dom_node->href = 'www.example.com';
+$html_dom_node->title = 'My title';
+$html_dom_node->my_custom_attribute = 'my_custom_value';
 ```
 
-```php
-<?php
-removeAttr(string $attributeName)
+#### _boolean_ removeAttr(string $attributeName)
+``` php
+$html_dom_node->removeAttr($attributeName)
 ```
 
-if your manipulating a **Html_dom_node** object, you can also use the following shortcut methods
-```php
-<?php
-->innertext = $value // shortcut for ->setInnerText($value)
-->outertext = $value // shortcut for ->setOuterText($value)
-->class = $value // shortcut for ->setAttr('class', $value)
-->href = $value // shortcut for ->setAttr('href', $value)
-->id = $value // shortcut for ->setAttr('id', $value)
-->title = $value // shortcut for ->setAttr('title', $value)
-->my_custom_attribute = $value // shortcut for ->setAttr('my_custom_attribute', $value)
+#### _Html_dom_node_ first_child()
+``` php
+$firstChildElement = $html_dom_node->first_child();
 ```
 
-```php
-<?php
-first_child()
+#### _Html_dom_node_ last_child()
+``` php
+$lastChildElement = $html_dom_node->last_child();
 ```
 
-```php
-<?php
-last_child()
+#### _Html_dom_node_ previous_sibling()
+``` php
+$previousElement = $html_dom_node->previous_sibling();
 ```
 
-```php
-<?php
-previous_sibling()
+#### _Html_dom_node_ next_sibling()
+``` php
+$nextElement = $html_dom_node->next_sibling();
 ```
 
-```php
-<?php
-next_sibling()
+#### _Html_dom_node_collection_ children()
+``` php
+$elementCollection = $html_dom_node->children();
 ```
 
-```php
-<?php
-children()
+#### _Html_dom_node_collection_ siblings()
+``` php
+$elementCollection = $html_dom_node->siblings();
 ```
 
-```php
-<?php
-siblings()
+#### _Html_dom_node_ parent()
+``` php
+$parentElement = $html_dom_node->parent();
 ```
 
-```php
-<?php
-parent()
+#### _mixed_ find(string $selector[, int $index])
+``` php
+$elementCollection = $html_dom_node->find('li');
+$element = $html_dom_node->find('li', 0);
 ```
 
-```php
-<?php
-find(string $selector[, int $index])
+#### _Html_dom_node_ getElementById(string $elementId)
+``` php
+$element = $html_dom_node->getElementById('content');
 ```
 
-```php
-<?php
-remove()
+#### _mixed_ getElementsByTagName(string $selector[, int $index])
+``` php
+$elementCollection = $html_dom_node->getElementsByTagName('li');
+$element = $html_dom_node->getElementsByTagName('li', 0);
 ```
 
-```php
-<?php
-remove_childs()
+#### _mixed_ remove()
+``` php
+$html_dom_node->remove();
+```
+
+#### _void_ remove_childs()
+``` php
+$html_dom_node->remove_childs()
 ```
 
 
@@ -249,69 +303,68 @@ Here is a list of the most common methods you might need.
 
 ##### Methods #####
 
-```php
-<?php
-count()
+
+#### _integer_ count()
+``` php
+$html_dom_node_collection->count();
 ```
 
-```php
-<?php
-offsetExists(mixed $index)
+#### _boolean_ offsetExists(mixed $index)
+``` php
+$html_dom_node_collection->offsetExists(mixed $index);
 ```
 
-```php
-<?php
-offsetGet(mixed $index)
+#### _Html_dom_node_ offsetGet(mixed $index)
+``` php
+$html_dom_node_collection->offsetGet($index);
 ```
 
-```php
-<?php
-offsetSet(mixed $index, mixed $value)
+#### _void_ offsetSet(mixed $index, mixed $value)
+``` php
+$html_dom_node_collection->offsetSet($index, $value);
 ```
 
-```php
-<?php
-offsetUnset(mixed $index)
+#### _void_ offsetUnset(mixed $index)
+``` php
+$html_dom_node_collection->offsetUnset($index);
 ```
 
 **You can also iterate in the array using the following methods**
 
-```php
-<?php
+``` php
 seek()
+$html_dom_node_collection->seek();
 ```
 
-```php
-<?php
+``` php
 rewind()
+$html_dom_node_collection->rewind();
 ```
 
-```php
-<?php
+``` php
 next()
+$html_dom_node_collection->next();
 ```
 
-```php
-<?php
+``` php
 current() // return the current Html_node
+$html_dom_node_collection->current();
 ```
 
-```php
-<?php
+``` php
 valid() // return a boolean
+$html_dom_node_collection->valid();
 ```
 
-**You can also apply one the the Html_node to all the items in the collections**
+### You can also apply one the the _Html_dom_node_ method to all the items of a _Html_dom_node_collection_
 
 _the examples below assume the we have loaded a document into $html_dom_
 
-```php
-<?php
+``` php
 $html_dom->find('ul li')->addClass('li_class'); // Will add the class "li_class" to all the "<li>" items
 ```
 
-```php
-<?php
+``` php
 $html_dom->find('ul li')->removeClass('li_class'); // Will remove the class "li_class" to all the "<li>" items
 ```
 
