@@ -1,18 +1,18 @@
 <?php
 /*******************************************************************************
-Version: 0.6.4
-Date : 2014-12-26
-Website: http://www.ecliptik.net/html-dom.html
-Website doc: http://www.ecliptik.net/html-dom.html
+Version: 0.7.0
+Date : 2015-10-01
+Website: https://github.com/alex-michaud/html-dom
 Author: alex michaud <alex.michaud@gmail.com>
 Licensed under The MIT License
 Redistribution of file must retain the above copyright notice.
-*******************************************************************************/
+ *******************************************************************************/
 
 /**
  * Load a html_dom object from a html string
- * @param string $str
- * @return html_dom object
+ * @param $str
+ * @param string $encoding
+ * @return Html_dom
  */
 function str_get_html($str, $encoding = 'UTF-8')
 {
@@ -24,31 +24,46 @@ function str_get_html($str, $encoding = 'UTF-8')
 /**
  * Load a html_dom object from a html file
  * @param $file_path
- * @return html_dom object
+ * @return Html_dom
  */
-function file_get_html($file_path)
+function file_get_html($file_path, $encoding = 'UTF-8')
 {
 	$html_dom = new Html_dom();
-	$html_dom->loadHTMLFile($file_path);
+	$html_dom->loadHTMLFile($file_path, $encoding);
 	return $html_dom;
 }
 
+function setDomDocumentProperties(&$dom, $encoding = 'UTF-8')
+{
+	$dom->formatOutput = true;
+	$dom->substituteEntities = false;
+	$dom->recover = true;
+	$dom->strictErrorChecking = false;
+	$dom->encoding = $encoding;
+}
 
-class Html_dom 
+/**
+ * Class Html_dom
+ *
+ * @property DOMDocument $dom
+ * @property bool $lowercase
+ */
+class Html_dom
 {
 	public $dom;
 	public $lowercase = false;
-	
-	public function __construct($dom = null)
+	private $context = null;
+
+	public function __construct(DOMDocument $dom = null)
 	{
 		if(!is_null($dom))
 			$this->dom = $dom;
 	}
-	
+
 	/**
 	 * Convert a CSS selector (similar to jQuery) to a valid xpath selector
 	 * @param string $q
-	 * @return 
+	 * @return string Xpath selector
 	 */
 	public static function cssSelectorToXPath($q)
 	{
@@ -78,93 +93,143 @@ class Html_dom
 		// echo $a." | <br />\n";
 		return $a;
 	}
-	
+
 	/**
 	 * Load a html_dom object from a html string
 	 * @param string $str
-	 * @param string $encoding [optional]
-	 * @return 
+	 * @param string $encoding
+	 * @return void
 	 */
 	public function loadHTML($str, $encoding = 'UTF-8')
 	{
 		libxml_use_internal_errors(true);
 		$this->dom = new DOMDocument('1.0', $encoding);
-		$this->dom->formatOutput = true;
-		$this->dom->substituteEntities = false;
-		$this->dom->recover = true;
-		$this->dom->strictErrorChecking = false;
-		$this->dom->encoding = $encoding;
-		
+		setDomDocumentProperties($this->dom, $encoding);
+
 		$str = mb_convert_encoding($str, 'HTML-ENTITIES', $encoding);// need this to fix encoding problem
 		$this->dom->loadHTML('<?xml encoding="'.$encoding.'">' .$str);
 		foreach ($this->dom->childNodes as $item)
-	    	if ($item->nodeType == XML_PI_NODE)
-	        	$this->dom->removeChild($item);
+			if ($item->nodeType == XML_PI_NODE)
+				$this->dom->removeChild($item);
 	}
-	
+
 	/**
 	 * Load a html_dom object from a html file
-	 * @param $file_path
+	 * @param string $file_path
+	 * @param string $encoding [optional]
 	 */
-	public function loadHTMLFile($file_path)
+	public function loadHTMLFile($file_path, $encoding = 'UTF-8')
 	{
-		$this->loadHTML(file_get_contents($file_path));
+		$this->loadHTML(file_get_contents($file_path, false, $this->context), $encoding);
 	}
-	
+
+	public function setBasicAuth($username, $password)
+	{
+		$cred = sprintf('Authorization: Basic %s', base64_encode("$username:$password"));
+		$opts = array(
+			'http' => array(
+				'method' => 'GET',
+				'header' => $cred
+			)
+		);
+		$this->context = stream_context_create($opts);
+	}
+
 	/**
 	 * Output HTML file to the screen, and save it to a file if a file path is specified
-	 * @param $file_path [optional]
-	 * @return HTML file
+	 * @param string $file_path [optional]
+	 * @return string
 	 */
 	public function save($file_path = '')
 	{
 		if(!empty($file_path))
 			$this->dom->saveHTMLFile($file_path);
-		
+
 		return $this->dom->saveHTML();
 	}
-	
+
 	/**
 	 * Find 1 or more dom element matching the css selector
 	 * @param string $selector
 	 * @param int $index [optional]
-	 * @return 1 dom element if index is specified or array of dom element if index is null
+	 * @return Html_dom_node_collection|Html_dom_node 1 dom element if index is specified or Html_dom_node_collection if index is null
 	 */
 	public function find($selector, $index = null)
 	{
-		$aElements = array();
-		
+		/** @var Html_dom_xpath $dom_xpath */
 		$dom_xpath = new Html_dom_xpath($this->dom);
-		
+
 		$xpathSelector = Html_dom::cssSelectorToXPath($selector);
 		$aElements = $dom_xpath->select($xpathSelector);
-		
-		if($index<0) 
+
+		if($index < 0)
 			$index = $aElements->count() + $index;
-		
+
 		if(is_null($index))
 			return $aElements;
 		else
-			return ($aElements->offsetExists($index))?$aElements->offsetGet($index):array();
+			return ($aElements->offsetExists($index)) ? $aElements->offsetGet($index) : array();
+	}
+
+	/**
+	 * @param string $id
+	 * @return Html_dom_node
+	 */
+	public function getElementById($id)
+	{
+		return ($element = $this->dom->getElementById($id)) ? new Html_dom_node($element) : null;
+	}
+
+	/**
+	 * @param $tag
+	 * @param null $index
+	 * @return Html_dom_node|Html_dom_node_collection|null
+	 */
+	public function getElementsByTagName($tag, $index = null)
+	{
+		$items = $this->dom->getElementsByTagName($tag);
+		if($items->length)
+		{
+			if(!is_null($index) && is_numeric($index))
+				return ($element = $items->item($index)) ? new Html_dom_node($element) : null;
+			else
+			{
+				$a = array();
+				foreach($items as $element)
+				{
+					$a[] = new Html_dom_node($element);
+				}
+				return new Html_dom_node_collection($a);
+			}
+		}
+		return null;
 	}
 }
 
+/**
+ * Class Html_dom_xpath
+ *
+ * @property DOMXpath $xpath
+ * @property DOMDocument $dom
+ */
 class Html_dom_xpath
 {
 	private $xpath;
-	
+	private $dom;
+
 	function __construct(&$dom)
 	{
 		$this->dom = $dom;
 		$this->xpath = new DOMXpath($this->dom);
 		$this->xpath->registerNamespace('html','http://www.w3.org/1999/xhtml');
 	}
-	
+
 	/**
 	 * Perform a xpath query
 	 * @param string $q
-	 * @param $relatedNode [optional]
-	 * @return array of html dom element
+	 * @param null $relatedNode
+	 * @return Html_dom_node_collection
+	 * @throws Exception
 	 */
 	public function select($q, &$relatedNode = null)
 	{
@@ -178,14 +243,13 @@ class Html_dom_xpath
 			$nodeList = $this->xpath->query('.//'.$q, $relatedNode);
 			$isRelated = 'yes';
 		}
-		
+
 		$a = array();
 		if($nodeList !== false)
 		{
-			foreach($nodeList as $node)
-				$a[] = new Html_dom_node($node, $this->dom);
-			
-			return new Html_dom_node_collection($a);
+			/** @var DOMElement $element */
+			foreach($nodeList as $element)
+				$a[] = new Html_dom_node($element);
 		}
 		else
 		{
@@ -193,83 +257,89 @@ class Html_dom_xpath
 				log_message("debug", "xpath selector is not valid : {$q} | Is related:{$isRelated}");
 			else
 				throw new Exception("xpath selector is not valid : {$q} | Is related:{$isRelated}", 1);
-			
+
 		}
+
+		return new Html_dom_node_collection($a);
 	}
-	
+
 }
 
+/**
+ * Class Html_dom_node
+ *
+ * @property DOMElement $DOMElement
+ */
 class Html_dom_node
 {
-	private $node;
-	private $dom;
-	
-	function __construct($nodeItem, &$dom)
+	private $DOMElement;
+
+	function __construct(DOMElement $element)
 	{
-		$this->node = $nodeItem;
-		$this->dom = $dom;
+		$this->DOMElement = $element;
 	}
-	
+
 	/**
 	 * Get the tag name of a dom element
 	 * @return string tag name
 	 */
 	public function getTag()
 	{
-		return $this->node->nodeName;
+		return $this->DOMElement->tagName;
 	}
 
 	/**
 	 * Get the inner content of a dom element
-	 * @return html string
+	 * @return string
 	 */
 	public function getInnerText()
 	{
 		$innerHTML= '';
-		$children = $this->node->childNodes;
+		$children = $this->DOMElement->childNodes;
 		if(!is_null($children))
 		{
+			/** @var DOMNode $child */
 			foreach ($children as $child)
-		 	   $innerHTML .= $child->ownerDocument->saveXML($child);
+				$innerHTML .= $child->ownerDocument->saveXML($child);
 		}
-		return $innerHTML; 
+		return str_replace(chr(13), '', $innerHTML);
 	}
-	
+
 	/**
 	 * Get the outer content of a dom element
-	 * @return 
+	 * @return string
 	 */
 	public function getOuterText()
 	{
-		return $this->node->ownerDocument->saveXML($this->node); 
+		return str_replace(chr(13), '', $this->DOMElement->ownerDocument->saveXML($this->node));
 	}
-	
+
 	/**
 	 * Get the value of an attribute
 	 * @param string $attributeName
-	 * @return value of the attribute
+	 * @return string value of the attribute
 	 */
 	public function getAttr($attributeName)
 	{
-		return $this->node->getAttribute($attributeName);
+		return $this->DOMElement->getAttribute($attributeName);
 	}
-	
-	public function __get($name) 
+
+	public function __get($name)
 	{
-        switch($name) 
+		switch($name)
 		{
-            case 'innertext': return $this->getInnerText();
+			case 'innertext': return $this->getInnerText();
 			case 'outertext': return $this->getOuterText();
 			case 'tag': return $this->getTag();
-            default: return $this->getAttr($name);
-        }
-    }
-	
+			default: return $this->getAttr($name);
+		}
+	}
+
 	/**
 	 * Set the inner content of a dom element
 	 * @param string $value (html or text)
 	 * @param string $encoding [optional]
-	 * @return 
+	 * @return void
 	 */
 	public function setInnerText($value, $encoding= 'UTF-8')
 	{
@@ -278,62 +348,60 @@ class Html_dom_node
 		libxml_use_internal_errors(true);
 		if(empty($value))
 			return;
-		
+
 		$value = mb_convert_encoding($value, 'HTML-ENTITIES', $encoding);// need this to fix encoding problem
 		// make sure the content is utf8
 		$value = '<html><head><meta http-equiv="content-type" content="text/html; charset='.$encoding.'" /></head><body><node>'.$value.'</node></body></html>';
 		$value = preg_replace_callback("@(<script\b[^>]*>)(.*?)(</script>)@is",array(&$this,'_escapeClosingTagInJavascript'),$value);
-		//libxml_use_internal_errors(true);
-		$newdoc = new DOMDocument('1.0');
-		$newdoc->formatOutput = true;
-		$newdoc->substituteEntities = false;
-		$newdoc->recover = true;
-		$newdoc->strictErrorChecking = false;
-		$newdoc->encoding = $encoding;
+		setDomDocumentProperties($newdoc, $encoding);
 		$newdoc->loadHTML('<?xml encoding="'.$encoding.'">'.$value);
-		
+
 		foreach ($newdoc->childNodes as $item)
-	    	if ($item->nodeType == XML_PI_NODE)
-	        	$newdoc->removeChild($item);
-		
+			if ($item->nodeType == XML_PI_NODE)
+				$newdoc->removeChild($item);
+
 		$list = $newdoc->getElementsByTagName('script');
+		/** @var DOMElement $script */
 		foreach ($list as $script) {
-		    if ($script->childNodes->length && $script->firstChild->nodeType == 4) {
+			if ($script->childNodes->length && $script->firstChild->nodeType == 4) {
 				$textnode = $script->ownerDocument->createTextNode("\n//");
-		        $cdata = $script->ownerDocument->createCDATASection("\n" . $script->firstChild->nodeValue . "\n//");
+				$cdata = $script->ownerDocument->createCDATASection("\n" . $script->firstChild->nodeValue . "\n//");
 				$script->removeChild($script->firstChild);
-		        $script->appendChild($textnode);
-		        $script->appendChild($cdata);
-		    }
+				$script->appendChild($textnode);
+				$script->appendChild($cdata);
+			}
 		}
 
 		// Remove the previous child nodes
-		$this->remove_childs($this->node);
-		
+		$this->remove_childs($this->DOMElement);
+
 		// add new nodes
 		if(!is_null($newdoc->getElementsByTagName('node')->item(0)))
 		{
+			/** @var DOMElement $n */
 			foreach($newdoc->getElementsByTagName('node')->item(0)->childNodes as $n)
 			{
-				$newnode = $this->dom->importNode($n, true);
-				
+				// The node we want to import to a new document
+				$newnode = $this->DOMElement->ownerDocument->importNode($n, true);
+
 				if($newnode !== false)
-				{
-					$this->node->appendChild($newnode);
-				}
+					$this->DOMElement->appendChild($newnode);
 			}
 		}
 	}
-	
+
 	/**
 	 * Script tag can cause some problems with html parser, we have to make sure we escape the closing tag
+	 *
+	 * @param array $matches
+	 * @return string
 	 */
 	private function _escapeClosingTagInJavascript($matches)
 	{
 		$escaped_string = preg_replace("@</@is","<\/",$matches[2]);
 		return $matches[1].$escaped_string.$matches[3];
 	}
-	
+
 	/**
 	 * Set the outer value of a node element (replace the current node)
 	 * @param $value
@@ -346,55 +414,60 @@ class Html_dom_node
 		libxml_use_internal_errors(true);
 		if(empty($value))
 			return;
-		
+
 		$value = mb_convert_encoding($value, 'HTML-ENTITIES', $encoding);// need this to fix encoding problem
 		// make sure the content is utf8
 		$value = '<html><head><meta http-equiv="content-type" content="text/html; charset='.$encoding.'" /></head><body><node>'.$value.'</node></body></html>';
-		$newdoc = new DOMDocument('1.0');
-		$newdoc->formatOutput = true;
-		$newdoc->substituteEntities = false;
-		$newdoc->recover = true;
-		$newdoc->strictErrorChecking = false;
-		$newdoc->encoding = $encoding;
+		setDomDocumentProperties($newdoc, $encoding);
 		$newdoc->loadHTML('<?xml encoding="'.$encoding.'">'.$value);
-		
+
 		foreach ($newdoc->childNodes as $item)
-	    	if ($item->nodeType == XML_PI_NODE)
-	        	$newdoc->removeChild($item);
-		
-		// The node we want to import to a new document
-		$newnode = $this->dom->importNode($newdoc->getElementsByTagName('node')->item(0)->firstChild, true);
-		
+			if ($item->nodeType == XML_PI_NODE)
+				$newdoc->removeChild($item);
+
 		// add new nodes
 		if(!is_null($newdoc->getElementsByTagName('node')->item(0)))
 		{
-			// we might have more than one new node, we have to loop through the list
+			/** @var DOMElement $n we might have more than one new node, we have to loop through the list */
 			foreach($newdoc->getElementsByTagName('node')->item(0)->childNodes as $n)
 			{
-				$newnode = $this->dom->importNode($n, true);
-				
+				// The node we want to import to a new document
+				$newnode = $this->DOMElement->ownerDocument->importNode($n, true);
+
 				if($newnode !== false)
 				{
 					// insert the new node before the current one
-					$this->node->parentNode->insertBefore($newnode, $this->node);
+					$this->DOMElement->parentNode->insertBefore($newnode, $this->DOMElement);
 				}
 			}
 			// we are done inserting the new nodes, we can delete the current one
-			$this->node->parentNode->removeChild($this->node);
+			$this->DOMElement->parentNode->removeChild($this->DOMElement);
 		}
 	}
-	
+
+	/**
+	 * @param $value
+	 * @return void
+	 */
 	public function addClass($value)
 	{
 		if(!$this->hasClass($value))
 			$this->class = trim(trim($this->class).' '.$value);
 	}
-	
+
+	/**
+	 * @param $value
+	 * @return void
+	 */
 	public function removeClass($value)
 	{
 		$this->class = trim(str_ireplace($value, '', $this->class));
 	}
-	
+
+	/**
+	 * @param $value
+	 * @return bool
+	 */
 	public function hasClass($value)
 	{
 		if(!$this->class)
@@ -402,223 +475,285 @@ class Html_dom_node
 		$classArray = explode(' ', $this->class);
 		return in_array($value, $classArray);
 	}
-	
+
 	/**
 	 * Set the value of a dom element attribute
 	 * @param $attributeName
 	 * @param $value
+	 * @return void
 	 */
 	public function setAttr($attributeName, $value)
 	{
-		$this->node->setAttribute($attributeName, $value);
+		$this->DOMElement->setAttribute($attributeName, $value);
 	}
-	
+
 	/**
 	 * Set the value of a dom element attribute
 	 * @param $attributeName
-	 * @param $value
+	 * @return bool
 	 */
 	public function removeAttr($attributeName)
 	{
-		$this->node->removeAttribute($attributeName);
+		return $this->DOMElement->removeAttribute($attributeName);
 	}
-	
-	public function __set($name, $value) 
+
+	public function __set($name, $value)
 	{
-        switch($name) 
+		switch($name)
 		{
-            case 'innertext': return $this->setInnerText($value);
-			case 'outertext': return $this->setOuterText($value);
-			case 'addClass': return $this->addClass($value);
-			case 'removeClass': return $this->removeClass($value);
-			default: return $this->setAttr($name, $value);
-        }
-    }
-	
+			case 'innertext':
+				$this->setInnerText($value);
+				break;
+			case 'outertext':
+				$this->setOuterText($value);
+				break;
+			case 'addClass':
+				$this->addClass($value);
+				break;
+			case 'removeClass':
+				$this->removeClass($value);
+				break;
+			default:
+				$this->setAttr($name, $value);
+				break;
+		}
+	}
+
 	/**
 	 * Find the first child a dom element
-	 * @return dom element
+	 * @return Html_dom_node|null
 	 */
 	public function first_child()
 	{
-		$childs = $this->children();
-		return reset($childs);
+		$children = $this->children();
+		return ($children->offsetExists(0)) ? $children->offsetGet(0) : null;
 	}
-	
+
 	/**
 	 * Find the last child a dom element
-	 * @return dom element
+	 * @return Html_dom_node
 	 */
 	public function last_child()
 	{
-		$childs = $this->children();
-		return end($childs);
+		$children = $this->children();
+		return ($count = $children->count()) ? $children->offsetGet($count-1) : null;
 	}
-	
+
 	/**
 	 * Find the immediate previous sibling
-	 * @return dom element
+	 * @return Html_dom_node|null
 	 */
 	public function previous_sibling()
 	{
-		$previousSibling = $this->_move_prev_element($this->node);
+		/** @var DOMElement $previousSibling */
+		$previousSibling = $this->_move_prev_element($this->DOMElement);
 		if(!is_null($previousSibling))
-			return new Html_dom_node($previousSibling, $this->dom);
+			return new Html_dom_node($previousSibling);
 		else
 			return NULL;
 	}
-	
+
 	/**
 	 * Find the immediate next sibling
-	 * @return dom element
+	 * @return Html_dom_node|null
 	 */
 	public function next_sibling()
 	{
-		$nextSibling = $this->_move_next_element($this->node);
+		/** @var DOMElement $nextSibling */
+		$nextSibling = $this->_move_next_element($this->DOMElement);
 		if(!is_null($nextSibling))
-			return new Html_dom_node($nextSibling, $this->dom);
+			return new Html_dom_node($nextSibling);
 		else
 			return NULL;
 	}
-	
-	private function _move_next_element($node)
-	{
-		$nextSibling = $node->nextSibling;
-		if(is_null($nextSibling))
-			return null;
-		elseif($nextSibling->nodeType == 1)
-			return $nextSibling;
-		else
-			return $this->_move_next_element($node->nextSibling);
-	}
-	
-	private function _move_prev_element($node)
+
+	/**
+	 * @param $node
+	 * @return DOMElement|null
+	 */
+	private function _move_prev_element(DOMNode $node)
 	{
 		$previousSibling = $node->previousSibling;
 		if(is_null($previousSibling))
 			return null;
-		elseif($previousSibling->nodeType == 1)
+		elseif($previousSibling->nodeType == XML_ELEMENT_NODE)
 			return $previousSibling;
 		else
 			return $this->_move_prev_element($node->previousSibling);
 	}
-	
+
+	/**
+	 * @param $node
+	 * @return DOMElement|null
+	 */
+	private function _move_next_element(DOMNode $node)
+	{
+		$nextSibling = $node->nextSibling;
+		if(is_null($nextSibling))
+			return null;
+		elseif($nextSibling->nodeType == XML_ELEMENT_NODE)
+			return $nextSibling;
+		else
+			return $this->_move_next_element($node->nextSibling);
+	}
+
 	/**
 	 * Find all the children of a dom element
-	 * @return array of dom element
+	 * @return Html_dom_node_collection array of dom element
 	 */
 	public function children()
 	{
 		$a = array();
-		if($this->node->childNodes->length)
+		if($this->DOMElement->childNodes->length)
 		{
-			foreach($this->node->childNodes as $node)
+			foreach($this->DOMElement->childNodes as $node)
 			{
-				if($node->nodeType == 1)
-					$a[] = new Html_dom_node($node, $this->dom);
+				if($node->nodeType == XML_ELEMENT_NODE)
+					$a[] = new Html_dom_node($node);
 			}
 		}
-		
+
 		return new Html_dom_node_collection($a);
 	}
-	
+
 	/**
 	 * Find all the siblings of a dom element
-	 * @return array of dom elements
+	 * @return Html_dom_node_collection array of dom elements
 	 */
 	public function siblings()
 	{
 		$a = array();
-		if($this->node->parentNode->childNodes->length)
+		if($this->DOMElement->parentNode->childNodes->length)
 		{
-			foreach($this->node->parentNode->childNodes as $node)
+			foreach($this->DOMElement->parentNode->childNodes as $node)
 			{
-				if($node->nodeType == 1 && !$this->node->isSameNode($node))
-					$a[] = new Html_dom_node($node, $this->dom);
+				if($node->nodeType == 1 && !$this->DOMElement->isSameNode($node))
+					$a[] = new Html_dom_node($node);
 			}
 		}
-		
+
 		return new Html_dom_node_collection($a);
 	}
-	
+
 	/**
 	 * Find the parent node of a dom element
-	 * @return 
+	 * @return Html_dom_node
 	 */
 	public function parent()
 	{
-		$parentNode = new Html_dom_node($this->node->parentNode, $this->dom);
-		return $parentNode;
+		return new Html_dom_node($this->DOMElement->parentNode);
 	}
-	
+
 	/**
 	 * Perform a search inside a dom element
 	 * @param string $selector
 	 * @param int $index [optional]
-	 * @return 1 dom element if index is specified or array of dom element if index is null
+	 * @return Html_dom_node_collection|Html_dom_node 1 dom element if index is specified or Html_dom_node_collection if index is null
 	 */
 	public function find($selector, $index = null)
 	{
-		$aElements = array();
-		
-		$dom_xpath = new Html_dom_xpath($this->dom);
-		
+		$dom_xpath = new Html_dom_xpath($this->DOMElement->ownerDocument);
+
 		$xpathSelector = Html_dom::cssSelectorToXPath($selector);
-		$aElements = $dom_xpath->select($xpathSelector, $this->node);
-		
-		if($index<0) 
+		$aElements = $dom_xpath->select($xpathSelector, $this->DOMElement);
+
+		if($index < 0)
 			$index = $aElements->count() + $index;
-		
+
 		if(is_null($index))
 			return $aElements;
 		else
-			return ($aElements->offsetExists($index))?$aElements->offsetGet($index):array();
+			return ($aElements->offsetExists($index)) ? $aElements->offsetGet($index) : array();
 	}
-	
+
+	/**
+	 * @param string $id
+	 * @return Html_dom_node
+	 */
+	public function getElementById($id)
+	{
+		return ($element = $this->DOMElement->ownerDocument->getElementById($id)) ? new Html_dom_node($element) : null;
+	}
+
+	/**
+	 * @param $tag
+	 * @param null $index
+	 * @return Html_dom_node|Html_dom_node_collection|null
+	 */
+	public function getElementsByTagName($tag, $index = null)
+	{
+		$items = $this->DOMElement->ownerDocument->getElementsByTagName($tag);
+		if($items->length)
+		{
+			if(!is_null($index) && is_numeric($index))
+				return ($element = $items->item($index)) ? new Html_dom_node($element) : null;
+			else
+			{
+				$a = array();
+				foreach($items as $element)
+				{
+					$a[] = new Html_dom_node($element);
+				}
+				return new Html_dom_node_collection($a);
+			}
+		}
+		return array();
+	}
+
 	/**
 	 * Remove the current node and all children
-	 * @return 
+	 * @return DOMNode|bool
 	 */
 	public function remove()
 	{
-		$this->node->parentNode->removeChild($this->node);
+		return $this->DOMElement->parentNode->removeChild($this->DOMElement);
 	}
-	
+
 	/**
 	 * Remove all childs of a dom element
-	 * @param $node [optional] 
+	 * @param $node [optional]
+	 * @return void
 	 */
 	public function remove_childs(&$node = NULL)
 	{
 		// if no node specified, use the current node
 		if(is_null($node))
-			$node = $this->node;
-		
+			$node = $this->DOMElement;
+
 		while($node->firstChild)
 		{
 			while ($node->firstChild->firstChild)
-			{
 				$this->remove_childs($node->firstChild);
-			}
+
 			$node->removeChild($node->firstChild);
 		}
 	}
 }
 
-class Html_dom_node_collection extends ArrayObject 
+/**
+ * Class Html_dom_node_collection
+ *
+ * @property ArrayIterator $iterator
+ * @method seek()
+ * @method rewind()
+ * @method next()
+ * @method current()
+ * @method valid()
+ */
+class Html_dom_node_collection extends ArrayObject
 {
 	private $iterator = array();
-	
+
 	public function __construct($arrDomNode)
 	{
 		parent::__construct($arrDomNode);
 		$this->iterator = $this->getIterator();
 	}
-	
+
 	public function __call($name, $arguments = null)
 	{
-		$value = (!is_null($arguments) && isset($arguments[0]))?$arguments[0]:null;
-		
+		$value = (!is_null($arguments) && isset($arguments[0])) ? $arguments[0] : null;
+
 		switch($name)
 		{
 			case 'seek' :
@@ -637,31 +772,29 @@ class Html_dom_node_collection extends ArrayObject
 				while($this->iterator->valid())
 				{
 					$this->iterator->current()->$name($value);
-			    	$this->iterator->next();
+					$this->iterator->next();
 				}
 				break;
 		}
 	}
-	
-	public function __get($name) 
+
+	public function __get($name)
 	{
 		$out = array();
-		// $iterator = $this->getIterator();
 		while($this->iterator->valid())
 		{
 			$out[] = $this->iterator->current()->$name;
-		    $this->iterator->next();
+			$this->iterator->next();
 		}
 		return $out;
-    }
-	
-	public function __set($name, $value) 
+	}
+
+	public function __set($name, $value)
 	{
-		// $iterator = $this->getIterator();
 		while($this->iterator->valid())
 		{
 			$this->iterator->current()->$name = $value;
-	    	$this->iterator->next();
+			$this->iterator->next();
 		}
-    }
+	}
 }
