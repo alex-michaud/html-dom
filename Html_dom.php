@@ -1,7 +1,7 @@
 <?php
 /*******************************************************************************
-Version: 0.7.0
-Date : 2015-10-01
+Version: 0.7.1
+Date : 2015-10-31
 Website: https://github.com/alex-michaud/html-dom
 Author: alex michaud <alex.michaud@gmail.com>
 Licensed under The MIT License
@@ -363,12 +363,12 @@ class Html_dom_node
 		$list = $newdoc->getElementsByTagName('script');
 		/** @var DOMElement $script */
 		foreach ($list as $script) {
-			if ($script->childNodes->length && $script->firstChild->nodeType == 4) {
-				$textnode = $script->ownerDocument->createTextNode("\n//");
-				$cdata = $script->ownerDocument->createCDATASection("\n" . $script->firstChild->nodeValue . "\n//");
+			if ($script->childNodes->length && $script->firstChild->nodeType == XML_CDATA_SECTION_NODE) {
+				$script_content = preg_replace(array("@\<!\[CDATA\[@", "@\]\]\>@"), array("//<![CDATA[", "//]]>"), $script->firstChild->textContent);
+				$script_content = str_replace(chr(13), '', $script_content);
+				$domtext = $script->ownerDocument->createTextNode("\n" . $script_content . "\n");
 				$script->removeChild($script->firstChild);
-				$script->appendChild($textnode);
-				$script->appendChild($cdata);
+				$script->appendChild($domtext);
 			}
 		}
 
@@ -443,6 +443,22 @@ class Html_dom_node
 			// we are done inserting the new nodes, we can delete the current one
 			$this->DOMElement->parentNode->removeChild($this->DOMElement);
 		}
+	}
+
+	/**
+	 * @param string $value
+	 */
+	public function append($value)
+	{
+		$this->setInnerText($this->getInnerText().$value);
+	}
+
+	/**
+	 * @param string $value
+	 */
+	public function prepend($value)
+	{
+		$this->setInnerText($value.$this->getInnerText());
 	}
 
 	/**
@@ -627,7 +643,7 @@ class Html_dom_node
 		{
 			foreach($this->DOMElement->parentNode->childNodes as $node)
 			{
-				if($node->nodeType == 1 && !$this->DOMElement->isSameNode($node))
+				if($node->nodeType == XML_ELEMENT_NODE && !$this->DOMElement->isSameNode($node))
 					$a[] = new Html_dom_node($node);
 			}
 		}
