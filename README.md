@@ -197,6 +197,16 @@ OR
 $html_dom_node->outertext = $value;
 ```
 
+#### _void_ append(string $value)
+``` php
+$html_dom_node->append($value);
+```
+
+#### _void_ prepend(string $value)
+``` php
+$html_dom_node->prepend($value);
+```
+
 #### _void_ addClass(string $class_name)
 ``` php
 $html_dom_node->addClass($class_name);
