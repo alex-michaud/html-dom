@@ -311,7 +311,7 @@ class Html_dom_node
 	 */
 	public function getOuterText()
 	{
-		return str_replace(chr(13), '', $this->DOMElement->ownerDocument->saveXML($this->node));
+		return str_replace(chr(13), '', $this->DOMElement->ownerDocument->saveXML($this->DOMElement));
 	}
 
 	/**
