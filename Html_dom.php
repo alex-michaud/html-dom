@@ -1,7 +1,7 @@
 <?php
 /*******************************************************************************
-Version: 0.7.1
-Date : 2015-10-31
+Version: 0.7.2
+Date : 2016-05-21
 Website: https://github.com/alex-michaud/html-dom
 Author: alex michaud <alex.michaud@gmail.com>
 Licensed under The MIT License
@@ -33,6 +33,10 @@ function file_get_html($file_path, $encoding = 'UTF-8')
 	return $html_dom;
 }
 
+/**
+ * @param $dom
+ * @param string $encoding
+ */
 function setDomDocumentProperties(&$dom, $encoding = 'UTF-8')
 {
 	$dom->formatOutput = true;
@@ -40,6 +44,12 @@ function setDomDocumentProperties(&$dom, $encoding = 'UTF-8')
 	$dom->recover = true;
 	$dom->strictErrorChecking = false;
 	$dom->encoding = $encoding;
+}
+
+if (!function_exists('gzdecode')) {
+	function gzdecode($string) { // no support for 2nd argument
+		return file_get_contents('compress.zlib://data:who/cares;base64,'. base64_encode($string));
+	}
 }
 
 /**
@@ -67,30 +77,29 @@ class Html_dom
 	 */
 	public static function cssSelectorToXPath($q)
 	{
-		$patterns = array();
-		$patterns[0] = '/^([a-z\-:_\.]+)/i';
-		$patterns[1] = '/^#/i';
-		$patterns[2] = '/^\./i';
-		$patterns[3] = '/^\[/i';
-		$patterns[4] = '/\s+\>\s+/i';
-		$patterns[5] = '/\s+/i';
-		$patterns[6] = '/(#)([\w\-:_\.]+)/i';
-		$patterns[7] = '/(\.)([\w\-:_\.]+)/i';
-		$patterns[8] = '/\[([\w\-]+)\=([\w\"\-:_\.]+)\]/i';
-		// $patterns[8] = '/^([a-z]+)\s+([a-z+)/';
-		$replacements = array();
-		$replacements[0] = '\1';
-		$replacements[1] = '*#';
-		$replacements[2] = '*.';
-		$replacements[3] = '*[';
-		$replacements[4] = '/';
-		$replacements[5] = '//';
-		$replacements[6] = '[@id="\2"]';
-		$replacements[7] = '[contains(@class,"\2")]';
-		$replacements[8] = '[contains(@\1,\2)]';
-		// $replacements[8] = '\1\/\/\2';
-		$a = preg_replace($patterns, $replacements, $q);
-		// echo $a." | <br />\n";
+		$a = preg_replace(
+			array(
+				'/\s?>\s?/',
+				'/\s+/',
+				'/#(\w+)/i',
+				'/\.(\w+)+/i',
+				'/\[([\w\-]+)\=([\w\"\-:_\.]+)\]/i',
+				'/(\w+)\*/i',
+				'/\]\*\[(.+)/i'
+			),
+			array(
+				'/',
+				'//',
+				'*[@id="\1"]',
+				'*[contains(@class,"\1")]',
+				'*[contains(@\1,\2)]',
+				'\1',
+				' and \1'
+			),
+			$q
+		);
+
+//		echo $a." | <br />\n";
 		return $a;
 	}
 
@@ -120,9 +129,16 @@ class Html_dom
 	 */
 	public function loadHTMLFile($file_path, $encoding = 'UTF-8')
 	{
-		$this->loadHTML(file_get_contents($file_path, false, $this->context), $encoding);
+		$content = file_get_contents($file_path, false, $this->context);
+		if ( bin2hex(substr($content,0,2)) == '1f8b' )
+			$content = gzdecode($content);
+		$this->loadHTML($content, $encoding);
 	}
 
+	/**
+	 * @param $username
+	 * @param $password
+	 */
 	public function setBasicAuth($username, $password)
 	{
 		$cred = sprintf('Authorization: Basic %s', base64_encode("$username:$password"));
@@ -366,6 +382,7 @@ class Html_dom_node
 			if ($script->childNodes->length && $script->firstChild->nodeType == XML_CDATA_SECTION_NODE) {
 				$script_content = preg_replace(array("@\<!\[CDATA\[@", "@\]\]\>@"), array("//<![CDATA[", "//]]>"), $script->firstChild->textContent);
 				$script_content = str_replace(chr(13), '', $script_content);
+				$script_content = html_entity_decode($script_content);
 				$domtext = $script->ownerDocument->createTextNode("\n" . $script_content . "\n");
 				$script->removeChild($script->firstChild);
 				$script->appendChild($domtext);
@@ -462,7 +479,7 @@ class Html_dom_node
 	}
 
 	/**
-	 * @param $value
+	 * @param string $value
 	 * @return void
 	 */
 	public function addClass($value)

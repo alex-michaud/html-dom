@@ -1,5 +1,9 @@
 <?php
 
+error_reporting(E_ALL);
+if (!ini_get('display_errors'))
+    ini_set('display_errors', '1');
+
 include_once 'Html_dom.php';
 
 $html_dom = file_get_html('index.html');
@@ -31,12 +35,14 @@ $html_dom = file_get_html('index.html');
 <p>Number of paragraphs in "id='content'" : <b><?php echo count($html_dom->find('#content p')); ?></b></p>
 <p>Number of paragraphs in body : <b><?php echo count($html_dom->find('body p')); ?></b></p>
 <p>Get the page title : <b><?php echo $title = $html_dom->find('title', 0)->innertext; ?></b></p>
-<p>Number of dom elements with class 'menu_item' : <b><?php echo count($html_dom->find('.menu_item')); ?></b></p>
+<p>Number of dom elements with class 'menu_item' : <b><?php echo count($html_dom->find('nav .menu_item')); ?></b></p>
 <p>Content of the first child in the list of items : <b><?php echo $html_dom->find('#content ol', 0)->first_child()->innertext; ?></b></p>
 <p>Content of the third child in the list of items : <b><?php echo $html_dom->getElementById('content')->find('ol li')->offsetGet(2)->innertext; ?></b></p>
 <p>How many siblings for the second element in the list of items : <b><?php echo $html_dom->find('#content ol li')->offsetGet(1)->siblings()->count(); ?></b></p>
 <p>Value of first menu item href attribute : <b><?php echo $html_dom->find('nav a', 0)->href; ?></b></p>
 <p>Value of the content attribute of the head meta element with attribute name="description" : <b><?php echo $html_dom->find('meta[name="description"]', 0)->content; ?></b></p>
+<p>Content of element with 2 class : <?php echo $html_dom->find('.one.two', 0)->innertext; ?></p>
+<p>Content of element "strong" with class "same" : <?php echo $html_dom->find('#promotion strong.same', 0)->innertext; ?> </p>
 <p>Add an attribute to a list of node : <b><?php $html_dom->find('.menu_item')->addClass('class_test'); ?></b></p>
 <hr />
 <h3>Content of nav</h3>
