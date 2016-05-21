@@ -42,6 +42,8 @@ $html_dom = file_get_html('index.html');
 <p>Value of first menu item href attribute : <b><?php echo $html_dom->find('nav a', 0)->href; ?></b></p>
 <p>Value of the content attribute of the head meta element with attribute name="description" : <b><?php echo $html_dom->find('meta[name="description"]', 0)->content; ?></b></p>
 <p>Content of element with 2 class : <?php echo $html_dom->find('.one.two', 0)->innertext; ?></p>
+<p>Second element with class "two" : <?php echo $html_dom->find('.two', 1)->innertext; ?></p>
+<p>Element with complex class name : <?php echo $html_dom->find('.complex-class_name', 0)->innertext; ?></p>
 <p>Content of element "strong" with class "same" : <?php echo $html_dom->find('#promotion strong.same', 0)->innertext; ?> </p>
 <p>Add an attribute to a list of node : <b><?php $html_dom->find('.menu_item')->addClass('class_test'); ?></b></p>
 <hr />

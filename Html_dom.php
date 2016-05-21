@@ -1,6 +1,6 @@
 <?php
 /*******************************************************************************
-Version: 0.7.2
+Version: 0.7.3
 Date : 2016-05-21
 Website: https://github.com/alex-michaud/html-dom
 Author: alex michaud <alex.michaud@gmail.com>
@@ -81,10 +81,10 @@ class Html_dom
 			array(
 				'/\s?>\s?/',
 				'/\s+/',
-				'/#(\w+)/i',
-				'/\.(\w+)+/i',
+				'/#([\w\-]+)/i',
+				'/\.([\w\-]+)+/i',
 				'/\[([\w\-]+)\=([\w\"\-:_\.]+)\]/i',
-				'/(\w+)\*/i',
+				'/([\w\-]+)\*/i',
 				'/\]\*\[(.+)/i'
 			),
 			array(
