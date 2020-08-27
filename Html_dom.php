@@ -1,7 +1,7 @@
 <?php
 /*******************************************************************************
-Version: 0.7.3
-Date : 2016-05-21
+Version: 0.7.4
+Date : 2020-08-27
 Website: https://github.com/alex-michaud/html-dom
 Author: alex michaud <alex.michaud@gmail.com>
 Licensed under The MIT License
@@ -63,6 +63,7 @@ class Html_dom
 	public $dom;
 	public $lowercase = false;
 	private $context = null;
+    private $contextOptions = array();
 
 	public function __construct(DOMDocument $dom = null)
 	{
@@ -129,6 +130,9 @@ class Html_dom
 	 */
 	public function loadHTMLFile($file_path, $encoding = 'UTF-8')
 	{
+        if (!empty($this->contextOptions)) {
+            $this->context = stream_context_create($this->contextOptions);
+        }
 		$content = file_get_contents($file_path, false, $this->context);
 		if ( bin2hex(substr($content,0,2)) == '1f8b' )
 			$content = gzdecode($content);
@@ -142,14 +146,26 @@ class Html_dom
 	public function setBasicAuth($username, $password)
 	{
 		$cred = sprintf('Authorization: Basic %s', base64_encode("$username:$password"));
-		$opts = array(
-			'http' => array(
-				'method' => 'GET',
-				'header' => $cred
-			)
-		);
-		$this->context = stream_context_create($opts);
+//		$opts = array(
+//			'http' => array(
+//				'method' => 'GET',
+//				'header' => $cred
+//			)
+//		);
+//		$this->context = stream_context_create($opts);
+        $this->contextOptions['http'] = array(
+            'method' => 'GET',
+            'header' => $cred
+        );
 	}
+
+	public function setSSLContext($verify_peer = true, $allow_self_signed = false)
+    {
+        $this->contextOptions['ssl'] = array(
+            'verify_peer' => $verify_peer,
+            'allow_self_signed' => $allow_self_signed,
+        );
+    }
 
 	/**
 	 * Output HTML file to the screen, and save it to a file if a file path is specified
